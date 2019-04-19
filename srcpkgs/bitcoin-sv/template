@@ -1,0 +1,42 @@
+# Template file for 'bitcoin-sv'
+pkgname=bitcoin-sv
+version=0.2.0
+revision=1
+build_style=gnu-configure
+configure_args="--disable-wallet --without-miniupnpc --disable-tests
+ --enable-prod-build --disable-bench --with-incompatible-bdb 
+ --disable-static --enable-hardening --with-boost=${XBPS_CROSS_BASE}/usr"
+hostmakedepends="automake pkg-config libtool"
+makedepends="db-devel protobuf-devel libprotoc-devel boost-devel
+ libevent-devel libatomic-devel"
+short_desc="Bitcoin SV (Satoshi Vision) is the original Bitcoin"
+maintainer="Colin Gilles <colin@breavyn.com>"
+license="MIT"
+homepage="https://bitcoinsv.io/"
+distfiles="https://github.com/bitcoin-sv/bitcoin-sv/archive/v${version}.tar.gz"
+checksum="a717c86f4cf8dd2bb28b3be914ca1aa38a93db3687434548e073f9eb69467043"
+subpackages="bitcoin-sv-devel"
+conflicts="bitcoin"
+
+pre_configure() {
+	./autogen.sh
+}
+
+post_install() {
+	for b in bitcoind bitcoin-cli bitcoin-tx; do
+		vinstall contrib/${b}.bash-completion 644 usr/share/bash-completion $b
+	done
+
+	vlicense COPYING
+}
+
+bitcoin-sv-devel_package() {
+	depends="${sourcepkg}>=${version}_${revision}"
+	short_desc+=" - development files"
+	pkg_install() {
+		vmove usr/include
+		vmove usr/lib/pkgconfig
+		vmove "usr/lib/*.so"
+		vdoc doc/shared-libraries.md # Provides information on libbitcoinconsensus
+	}
+}
